@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Simple EC2 Control</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 2rem auto; }
+      button { margin-right: 0.5rem; }
+      pre { background: #f6f8fa; padding: 0.75rem; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>EC2 Control</h1>
+    <div id="auth">
+      <button id="login">Login</button>
+      <button id="logout" style="display:none">Logout</button>
+    </div>
+
+    <div id="actions" style="display:none">
+      <button id="create">Create EC2 Instance</button>
+      <div style="margin-top:0.75rem">
+        <label for="inst">Instance ID:</label>
+        <input id="inst" placeholder="i-xxxxxxxxxxxxxxxxx" style="width: 24rem" />
+        <button id="delete">Delete Instance</button>
+      </div>
+    </div>
+
+    <pre id="out"></pre>
+
+    <script>
+    // Configure these values for your environment
+    const REGION = 'us-east-1';
+    const USER_POOL_DOMAIN = 'YOUR_DOMAIN_PREFIX.auth.' + REGION + '.amazoncognito.com'; // e.g. myapp-abc123.auth.us-east-1.amazoncognito.com
+    const CLIENT_ID = 'YOUR_USER_POOL_CLIENT_ID';
+    const API_BASE = 'https://YOUR_EXECUTE_API_ID.execute-api.' + REGION + '.amazonaws.com/Prod';
+    const REDIRECT_URI = window.location.origin + window.location.pathname; // redirect back to same page
+
+    // OAuth 2.0 implicit flow (simplified). For production prefer PKCE.
+    function loginUrl() {
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: 'token',
+        scope: 'openid email',
+        redirect_uri: REDIRECT_URI
+      });
+      return `https://${USER_POOL_DOMAIN}/oauth2/authorize?${params.toString()}`;
+    }
+
+    function logoutUrl() {
+      const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        logout_uri: REDIRECT_URI
+      });
+      return `https://${USER_POOL_DOMAIN}/logout?${params.toString()}`;
+    }
+
+    function parseTokenFromHash() {
+      if (location.hash && location.hash.startsWith('#')) {
+        const h = new URLSearchParams(location.hash.substring(1));
+        const token = h.get('access_token');
+        if (token) {
+          localStorage.setItem('access_token', token);
+          // clear hash for cleanliness
+          history.replaceState({}, document.title, location.pathname + location.search);
+        }
+      }
+      return localStorage.getItem('access_token');
+    }
+
+    async function api(path, options={}) {
+      const token = localStorage.getItem('access_token');
+      if (!token) throw new Error('Not authenticated');
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      return { status: res.status, data };
+    }
+
+    const out = document.getElementById('out');
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
+    const actions = document.getElementById('actions');
+    const createBtn = document.getElementById('create');
+    const deleteBtn = document.getElementById('delete');
+    const instInput = document.getElementById('inst');
+
+    function renderAuthState() {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = '';
+        actions.style.display = '';
+      } else {
+        loginBtn.style.display = '';
+        logoutBtn.style.display = 'none';
+        actions.style.display = 'none';
+      }
+    }
+
+    loginBtn.onclick = () => {
+      window.location.href = loginUrl();
+    };
+
+    logoutBtn.onclick = () => {
+      localStorage.removeItem('access_token');
+      window.location.href = logoutUrl();
+    };
+
+    createBtn.onclick = async () => {
+      out.textContent = 'Creating instance...';
+      try {
+        const { status, data } = await api('/create-ec2', { method: 'POST', body: JSON.stringify({}) });
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        out.textContent = 'Error: ' + e;
+      }
+    };
+    deleteBtn.onclick = async () => {
+      const id = instInput.value.trim();
+      if (!id) { out.textContent = 'Enter an Instance ID.'; return; }
+      out.textContent = 'Deleting ' + id + '...';
+      try {
+        const r = await api('/instances/' + encodeURIComponent(id), { method: 'DELETE' });
+        out.textContent = JSON.stringify(r.data, null, 2);
+      } catch (e) {
+        out.textContent = 'Error: ' + e;
+      }
+    };
+
+    // On load, capture token and update UI
+    parseTokenFromHash();
+    renderAuthState();
+    // No list endpoint; you can paste the Instance ID to delete.
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,255 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Simple stack with Cognito UserPool, Lambda to create EC2, and API Gateway protected by Cognito.
+
+Parameters:
+  DomainPrefix:
+    Type: String
+    Description: Unique domain prefix for Cognito Hosted UI (must be globally unique)
+  CallbackUrl:
+    Type: String
+    Description: Callback URL for the Cognito App Client (e.g., http://localhost:8000/callback.html)
+  FrontendDomainName:
+    Type: String
+    Default: ''
+    Description: Optional custom domain for CloudFront (e.g., app.sajil.click). Leave blank to use default CloudFront domain.
+  FrontendCertificateArn:
+    Type: String
+    Default: ''
+    Description: ACM certificate ARN in us-east-1 for the frontend custom domain. Required if FrontendDomainName is set.
+  HostedZoneId:
+    Type: String
+    Default: ''
+    Description: Optional Route 53 Hosted Zone ID for creating an alias A record to CloudFront (e.g., Z123EXAMPLEABC).
+    
+
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: simple-serverless-userpool
+      AutoVerifiedAttributes:
+        - email
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: simple-app-client
+      GenerateSecret: false
+      UserPoolId: !Ref CognitoUserPool
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - openid
+        - email
+      CallbackURLs:
+        - !Ref CallbackUrl
+      LogoutURLs:
+        - !Ref CallbackUrl
+
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref DomainPrefix
+      UserPoolId: !Ref CognitoUserPool
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: CreateEC2Api
+      StageName: Prod
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
+      Cors:
+        AllowMethods: "GET,POST,DELETE,OPTIONS"
+        AllowHeaders: "Content-Type,Authorization"
+        AllowOrigin: '*'
+
+  CreateEC2Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create-ec2-lambda
+      Runtime: python3.11
+      Handler: create_ec2.lambda_handler
+      CodeUri: lambda/
+      Timeout: 30
+      Environment:
+        Variables:
+          # Optionally set a specific AMI ID
+          AMI_ID: ''
+          INSTANCE_TYPE: t2.micro
+          INSTANCES_TABLE: !Ref InstancesTable
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - ec2:RunInstances
+                - ec2:DescribeImages
+                - ec2:CreateTags
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource: !GetAtt InstancesTable.Arn
+      Events:
+        CreateApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /create-ec2
+            Method: post
+
+  # ListInstancesFunction removed: consolidating to only create and delete Lambdas
+
+  DeleteInstanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete-instance-lambda
+      Runtime: python3.11
+      Handler: delete_instance.lambda_handler
+      CodeUri: lambda/
+      Timeout: 30
+      Environment:
+        Variables:
+          INSTANCES_TABLE: !Ref InstancesTable
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:DeleteItem
+                - dynamodb:GetItem
+              Resource: !GetAtt InstancesTable.Arn
+            - Effect: Allow
+              Action:
+                - ec2:TerminateInstances
+                - ec2:DescribeInstances
+              Resource: '*'
+      Events:
+        DeleteApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /instances/{id}
+            Method: delete
+
+  InstancesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: InstancesTable
+      AttributeDefinitions:
+        - AttributeName: InstanceId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: InstanceId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # --- Frontend hosting: S3 (private) + CloudFront with OAC ---
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  FrontendOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-oac"
+        Description: Access control for S3 private origin
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub "${AWS::StackName} frontend distribution"
+        DefaultRootObject: index.html
+        Aliases: !If [HasCustomDomain, [!Ref FrontendDomainName], !Ref "AWS::NoValue"]
+        Origins:
+          - Id: s3-frontend-origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref FrontendOAC
+        DefaultCacheBehavior:
+          TargetOriginId: s3-frontend-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized managed policy
+        ViewerCertificate: !If
+          - HasCert
+          - {
+              ACMCertificateArn: !Ref FrontendCertificateArn,
+              SslSupportMethod: sni-only,
+              MinimumProtocolVersion: TLSv1.2_2021
+            }
+          - { CloudFrontDefaultCertificate: true }
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontAccessWithOAC
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}"
+
+  FrontendAliasRecord:
+    Condition: UseAliasRecord
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref FrontendDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt FrontendDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref FrontendDomainName, ""]]
+  HasCert: !Not [!Equals [!Ref FrontendCertificateArn, ""]]
+  HasHostedZone: !Not [!Equals [!Ref HostedZoneId, ""]]
+  UseAliasRecord: !And [!Condition HasCustomDomain, !Condition HasHostedZone]
+
+Outputs:
+  ApiUrl:
+    Description: "Invoke URL for the API (POST /create-ec2)"
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  FrontendBucketName:
+    Description: "S3 bucket to upload frontend files (private)"
+    Value: !Ref FrontendBucket
+  FrontendDistributionDomain:
+    Description: "CloudFront domain for the frontend"
+    Value: !GetAtt FrontendDistribution.DomainName
+  CognitoDomain:
+    Description: "Cognito Hosted UI Domain (prefix)"
+    Value: !Sub "${DomainPrefix}.auth.${AWS::Region}.amazoncognito.com"
+  UserPoolId:
+    Value: !Ref CognitoUserPool
+  UserPoolClientId:
+    Value: !Ref CognitoUserPoolClient
