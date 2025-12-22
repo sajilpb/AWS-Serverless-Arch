@@ -28,31 +28,10 @@
     <pre id="out"></pre>
 
     <script>
-    // Configure these values for your environment
-    const REGION = 'us-east-1';
-    const USER_POOL_DOMAIN = 'YOUR_DOMAIN_PREFIX.auth.' + REGION + '.amazoncognito.com'; // e.g. myapp-abc123.auth.us-east-1.amazoncognito.com
-    const CLIENT_ID = 'YOUR_USER_POOL_CLIENT_ID';
-    const API_BASE = 'https://YOUR_EXECUTE_API_ID.execute-api.' + REGION + '.amazonaws.com/Prod';
-    const REDIRECT_URI = window.location.origin + window.location.pathname; // redirect back to same page
-
-    // OAuth 2.0 implicit flow (simplified). For production prefer PKCE.
-    function loginUrl() {
-      const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        response_type: 'token',
-        scope: 'openid email',
-        redirect_uri: REDIRECT_URI
-      });
-      return `https://${USER_POOL_DOMAIN}/oauth2/authorize?${params.toString()}`;
-    }
-
-    function logoutUrl() {
-      const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        logout_uri: REDIRECT_URI
-      });
-      return `https://${USER_POOL_DOMAIN}/logout?${params.toString()}`;
-    }
+    // API base URL (no Cognito details stored here)
+    // Replace the value below with your API Gateway endpoint (terraform output `api_base_url`).
+    // Example: 'https://abc123.execute-api.us-east-1.amazonaws.com'
+    const API_BASE = 'https://1b63jirpg4.execute-api.us-east-1.amazonaws.com';
 
     function parseTokenFromHash() {
       if (location.hash && location.hash.startsWith('#')) {
@@ -70,6 +49,7 @@
     async function api(path, options={}) {
       const token = localStorage.getItem('access_token');
       if (!token) throw new Error('Not authenticated');
+      if (!API_BASE) throw new Error('API not configured');
       const res = await fetch(`${API_BASE}${path}`, {
         ...options,
         headers: {
@@ -106,12 +86,21 @@
     }
 
     loginBtn.onclick = () => {
-      window.location.href = loginUrl();
+      if (!API_BASE || API_BASE.includes('REPLACE_WITH_API_BASE')) {
+        out.textContent = 'API not configured. Set API_BASE in index.html.';
+        return;
+      }
+      window.location.href = `${API_BASE}/login`;
     };
 
     logoutBtn.onclick = () => {
+      if (!API_BASE || API_BASE.includes('REPLACE_WITH_API_BASE')) {
+        out.textContent = 'API not configured. Set API_BASE in index.html.';
+        return;
+      }
+      // Clear local token then redirect to Hosted UI logout via API
       localStorage.removeItem('access_token');
-      window.location.href = logoutUrl();
+      window.location.href = `${API_BASE}/logout`;
     };
 
     createBtn.onclick = async () => {

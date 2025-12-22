@@ -12,23 +12,6 @@ module "s3" {
   s3bucketname    = var.s3bucketname
 }
 
-
-# Dedicated bucket for SES inbound email storage
-# module "s3_ses" {
-#   source       = "./modules/S3"
-#   s3bucketname = var.ses_bucket_name
-# }
-
-# # Amazon SES setup to store inbound emails to the SES bucket
-# module "ses" {
-#   source          = "./modules/ses"
-#   domain          = local.my_domain
-#   ses_bucket_name = var.ses_bucket_name
-#   rule_set_name   = "inbound"
-
-#   depends_on = [module.s3_ses]
-# }
-
 module "ACM" {
   source          = "./modules/acmcertificate"
   my_domain         = local.my_domain
@@ -36,4 +19,24 @@ module "ACM" {
 
 module "Cognito" {
   source = "./modules/Cognito"
+  callback_url = "https://${local.my_domain}/index.html"
+  domain_prefix = var.cognito_domain_prefix
+}
+
+module "lambda" {
+  source                = "./modules/lambda"
+  source_file_path      = var.source_file_path
+  output_zip_path       = var.output_zip_path
+  Cognito_domain_prefix = module.Cognito.domain_prefix
+  Cognito_client_id     = module.Cognito.client_id
+  Cognito_user_pool_id  = module.Cognito.user_pool_id
+  Cognito_client_secret = ""
+  oidc_scopes           = "email openid"
+  my_domain             = local.my_domain
+  aws_apigatewayv2_api  = module.apigateway.api_gateway_arn
+}
+
+module "apigateway" {
+  source       = "./modules/apigateway"
+  aws_lambda_login_redirect = module.lambda.function_arn
 }

@@ -1,6 +1,6 @@
 resource "aws_cognito_user_pool_domain" "cognito-domain" {
-  domain       = "sajilclick"
-  user_pool_id = "${aws_cognito_user_pool.pool.id}"
+  domain       = var.domain_prefix
+  user_pool_id = aws_cognito_user_pool.pool.id
 }
 
 resource "aws_cognito_user_pool" "pool" {
@@ -40,6 +40,15 @@ resource "aws_cognito_user_pool_client" "client" {
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_ADMIN_USER_PASSWORD_AUTH"
   ]
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows = ["implicit"]
+  allowed_oauth_scopes = [
+    "openid",
+    "email"
+  ]
+  supported_identity_providers = ["COGNITO"]
+  callback_urls = [var.callback_url]
+  logout_urls   = [var.callback_url]
 }
 
 resource "aws_cognito_identity_pool" "main" {
