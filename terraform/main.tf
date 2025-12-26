@@ -34,6 +34,7 @@ module "lambda" {
   oidc_scopes           = "email openid"
   my_domain             = local.my_domain
   aws_apigatewayv2_api  = module.apigateway.api_gateway_arn
+  dynamodb_table_name   = module.Dynamodb.instance_table_name
 }
 
 module "apigateway" {

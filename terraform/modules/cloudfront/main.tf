@@ -26,6 +26,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
+    
     target_origin_id = var.s3_origin_id
 
     forwarded_values {
@@ -41,6 +42,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     default_ttl            = 3600
     max_ttl                = 86400
   }
+  
 
   # Cache behavior with precedence 0
   ordered_cache_behavior {
@@ -110,6 +112,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 data "aws_route53_zone" "my_domain" {
   name = var.my_domain
 }
+
 
 # Allow CloudFront distribution to read from the S3 origin bucket
 data "aws_iam_policy_document" "allow_cf_read" {

@@ -49,3 +49,8 @@ variable "oidc_scopes" {
   description = "OIDC scopes to request"
   default     = "email openid"
 }
+
+variable "dynamodb_table_name" {
+  type        = string
+  description = "DynamoDB table name for storing user EC2 instances"
+}

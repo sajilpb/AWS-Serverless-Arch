@@ -43,6 +43,7 @@ resource "aws_lambda_function" "login_redirect" {
         COGNITO_USER_POOL_ID  = var.Cognito_user_pool_id
         COGNITO_CLIENT_SECRET = var.Cognito_client_secret
         OIDC_SCOPES           = var.oidc_scopes
+        DDB_TABLE_NAME        = var.dynamodb_table_name
     }
   }
 
@@ -85,6 +86,14 @@ resource "aws_lambda_permission" "apigw_delete_instance" {
   source_arn    = "${var.aws_apigatewayv2_api}/*/DELETE/instances/*"
 }
 
+resource "aws_lambda_permission" "apigw_delete_instances_all" {
+  statement_id  = "AllowInvokeFromHttpApiDeleteInstancesAll"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.login_redirect.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.aws_apigatewayv2_api}/*/DELETE/instances"
+}
+
 data "aws_iam_policy_document" "ec2_access" {
   statement {
     sid     = "EC2Access"
@@ -98,6 +107,12 @@ data "aws_iam_policy_document" "ec2_access" {
       "ec2:DescribeVpcs",
       "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:DeleteItem",
+      "dynamodb:DescribeTable",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents"]
