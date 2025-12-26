@@ -29,8 +29,42 @@ resource "aws_apigatewayv2_route" "logout" {
   target    = "integrations/${aws_apigatewayv2_integration.login.id}"
 }
 
+resource "aws_apigatewayv2_route" "create_ec2" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /create-ec2"
+  target    = "integrations/${aws_apigatewayv2_integration.login.id}"
+}
+
+resource "aws_apigatewayv2_route" "delete_instance" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "DELETE /instances/{id}"
+  target    = "integrations/${aws_apigatewayv2_integration.login.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
   name        = "$default"
   auto_deploy = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.http_api_access.arn
+    format = jsonencode({
+      requestId      = "$context.requestId",
+      routeKey       = "$context.routeKey",
+      status         = "$context.status",
+      integrationStatus = "$context.integrationStatus",
+      authorizerError = "$context.authorizer.error",
+      identity       = {
+        sourceIp = "$context.identity.sourceIp",
+        userAgent = "$context.identity.userAgent"
+      },
+      path           = "$context.path",
+      method         = "$context.httpMethod"
+    })
+  }
+}
+
+resource "aws_cloudwatch_log_group" "http_api_access" {
+  name              = "/aws/apigateway/http-api-access"
+  retention_in_days = 7
 }

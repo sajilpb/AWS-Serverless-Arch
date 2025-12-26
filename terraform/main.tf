@@ -40,3 +40,7 @@ module "apigateway" {
   source       = "./modules/apigateway"
   aws_lambda_login_redirect = module.lambda.function_arn
 }
+
+module "Dynamodb" {
+  source = "./modules/Dynamodb"
+}

@@ -31,6 +31,7 @@ resource "aws_lambda_function" "login_redirect" {
   role          = aws_iam_role.example.arn
   handler       = "login_redirect.lambda_handler"
   source_code_hash = data.archive_file.login_redirect.output_base64sha256
+  timeout       = 300
 
   runtime = var.runtime
 
@@ -66,4 +67,46 @@ resource "aws_lambda_permission" "apigw_logout" {
   function_name = aws_lambda_function.login_redirect.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${var.aws_apigatewayv2_api}/*/GET/logout"
+}
+
+resource "aws_lambda_permission" "apigw_create_ec2" {
+  statement_id  = "AllowInvokeFromHttpApiCreateEc2"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.login_redirect.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.aws_apigatewayv2_api}/*/POST/create-ec2"
+}
+
+resource "aws_lambda_permission" "apigw_delete_instance" {
+  statement_id  = "AllowInvokeFromHttpApiDeleteInstance"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.login_redirect.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.aws_apigatewayv2_api}/*/DELETE/instances/*"
+}
+
+data "aws_iam_policy_document" "ec2_access" {
+  statement {
+    sid     = "EC2Access"
+    effect  = "Allow"
+    actions = [
+      "ec2:RunInstances",
+      "ec2:DescribeImages",
+      "ec2:CreateTags",
+      "ec2:TerminateInstances",
+      "ec2:DescribeInstances",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_ec2_policy" {
+  name   = "lambda-ec2-access"
+  role   = aws_iam_role.example.id
+  policy = data.aws_iam_policy_document.ec2_access.json
 }

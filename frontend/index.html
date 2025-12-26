@@ -31,7 +31,7 @@
     // API base URL (no Cognito details stored here)
     // Replace the value below with your API Gateway endpoint (terraform output `api_base_url`).
     // Example: 'https://abc123.execute-api.us-east-1.amazonaws.com'
-    const API_BASE = 'https://1b63jirpg4.execute-api.us-east-1.amazonaws.com';
+    const API_BASE = 'https://72p7y99y0e.execute-api.us-east-1.amazonaws.com';
 
     function parseTokenFromHash() {
       if (location.hash && location.hash.startsWith('#')) {
@@ -107,7 +107,7 @@
       out.textContent = 'Creating instance...';
       try {
         const { status, data } = await api('/create-ec2', { method: 'POST', body: JSON.stringify({}) });
-        out.textContent = JSON.stringify(data, null, 2);
+        out.textContent = 'HTTP status: ' + status + '\n' + JSON.stringify(data, null, 2);
       } catch (e) {
         out.textContent = 'Error: ' + e;
       }
