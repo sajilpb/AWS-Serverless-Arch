@@ -1,0 +1,30 @@
+site_name: AWS Serverless EC2 Control
+site_description: Infrastructure and architecture documentation for the AWS Serverless EC2 Control project
+site_author: ""
+repo_url: ""
+repo_name: "AWS-Serverless-Arch"
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Components: architecture/components.md
+  - Infrastructure:
+      - Terraform Layout: infrastructure/terraform-layout.md
+      - Modules: infrastructure/modules.md
+  - Operations:
+      - Deployment: operations/deployment.md
+      - Frontend: operations/frontend.md
+  - Reference:
+      - Outputs: reference/terraform-outputs.md
+      - Variables: reference/terraform-variables.md
+theme:
+  name: mkdocs
+  locale: en
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+  - fenced_code
+plugins:
+  - search
