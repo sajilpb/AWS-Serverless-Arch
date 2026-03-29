@@ -45,3 +45,37 @@ module "apigateway" {
 module "Dynamodb" {
   source = "./modules/Dynamodb"
 }
+
+module "worker_lambda" {
+  source              = "./modules/worker_lambda"
+  source_file_path    = var.source_file_path
+  output_zip_path     = "./build/instance_create_worker.zip"
+  function_name       = "instance-create-worker"
+  handler             = "hexapp.inbound.eventbridge_worker.lambda_handler"
+  runtime             = "python3.11"
+  dynamodb_table_name = module.Dynamodb.instance_table_name
+  my_domain           = local.my_domain
+}
+
+resource "aws_cloudwatch_event_rule" "instance_create_requested" {
+  name        = "instance-create-requested"
+  description = "Routes InstanceCreateRequested events to the provisioning worker"
+
+  event_pattern = jsonencode({
+    source      = ["app.ec2-control-plane"],
+    "detail-type" = ["InstanceCreateRequested", "InstancesTerminateRequested"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "instance_create_worker" {
+  rule = aws_cloudwatch_event_rule.instance_create_requested.name
+  arn  = module.worker_lambda.function_arn
+}
+
+resource "aws_lambda_permission" "allow_eventbridge_invoke_worker" {
+  statement_id  = "AllowEventBridgeInvokeWorker"
+  action        = "lambda:InvokeFunction"
+  function_name = module.worker_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.instance_create_requested.arn
+}

@@ -47,6 +47,12 @@ resource "aws_apigatewayv2_route" "delete_instances_all" {
   target    = "integrations/${aws_apigatewayv2_integration.login.id}"
 }
 
+resource "aws_apigatewayv2_route" "request_status" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /requests/{id}"
+  target    = "integrations/${aws_apigatewayv2_integration.login.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
   name        = "$default"

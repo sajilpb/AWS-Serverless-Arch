@@ -1,6 +1,6 @@
 variable "source_file_path" {
   type = string
-  description = "Path to the source lambda function"
+  description = "Path to the Lambda source directory (zipped and deployed)"
 }
 
 variable "output_zip_path" {

@@ -9,15 +9,13 @@ variable "ses_bucket_name" {
 }
 
 variable "source_file_path" {
-  # Path to Backend login redirect Lambda source
-    # Use a plain relative path; variables/functions aren't allowed in defaults
-    default = "../Backend/login_redirect.py"
+  description = "Path to the Lambda source directory (zipped and deployed)"
+  default     = "../Backend"
 }
 
 variable "output_zip_path" {
-  # Output zip path for the packaged Lambda
-    # Use a plain relative path for the zip output
-    default = "../Backend/login_redirect.zip"
+  description = "Output zip path for the packaged Lambda"
+  default     = "./build/login_redirect.zip"
 }
 
 variable "cognito_domain_prefix" {

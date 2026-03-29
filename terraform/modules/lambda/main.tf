@@ -20,7 +20,7 @@ resource "aws_iam_role" "example" {
 # Package the Lambda function code
 data "archive_file" "login_redirect" {
   type        = "zip"
-  source_file = var.source_file_path
+  source_dir  = var.source_file_path
   output_path = var.output_zip_path
 }
 
@@ -94,11 +94,20 @@ resource "aws_lambda_permission" "apigw_delete_instances_all" {
   source_arn    = "${var.aws_apigatewayv2_api}/*/DELETE/instances"
 }
 
+resource "aws_lambda_permission" "apigw_get_request_status" {
+  statement_id  = "AllowInvokeFromHttpApiGetRequestStatus"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.login_redirect.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.aws_apigatewayv2_api}/*/GET/requests/*"
+}
+
 data "aws_iam_policy_document" "ec2_access" {
   statement {
     sid     = "EC2Access"
     effect  = "Allow"
     actions = [
+      "events:PutEvents",
       "ec2:RunInstances",
       "ec2:DescribeImages",
       "ec2:CreateTags",

@@ -2,6 +2,17 @@
 
 This project implements a **serverless EC2 control plane** on AWS. Users authenticate via Cognito, then interact with a Lambda‑backed HTTP API to create and delete EC2 instances that are associated with their identity.
 
+## Backend Code Architecture (Hexagonal)
+
+The deployed AWS infrastructure is intentionally simple (one Lambda behind one HTTP API), but the Lambda **code** is structured using **Hexagonal (Ports & Adapters) architecture**:
+
+- **Inbound adapter**: API Gateway/Lambda event handling and routing in [Backend/hexapp/inbound/api_gateway.py](../../Backend/hexapp/inbound/api_gateway.py).
+- **Application core (use-cases)**: business flows like create/terminate instances in [Backend/hexapp/application.py](../../Backend/hexapp/application.py).
+- **Ports**: interfaces the core depends on (compute + repository + clock) in [Backend/hexapp/ports.py](../../Backend/hexapp/ports.py).
+- **Outbound adapters**: AWS implementations using `boto3` (EC2 + DynamoDB) in [Backend/hexapp/adapters/aws/](../../Backend/hexapp/adapters/aws/).
+
+Terraform still points the Lambda handler at [Backend/login_redirect.py](../../Backend/login_redirect.py), which now acts as a thin delegator into the inbound adapter.
+
 ## High‑Level Diagram (Logical)
 
 - **Client (Browser)**
