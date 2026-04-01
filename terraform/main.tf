@@ -1,7 +1,7 @@
 module "cloudfront" {
   source        = "./modules/cloudfront"
   s3_origin_id  = local.s3_origin_id
-  my_domain     = local.my_domain
+  my_domain     = var.my_domain
   acm_certificate_arn = module.ACM.acm_certificate_arn
   aws_s3_bucket = var.s3bucketname
   depends_on = [ module.s3 ]
@@ -14,12 +14,12 @@ module "s3" {
 
 module "ACM" {
   source          = "./modules/acmcertificate"
-  my_domain         = local.my_domain
+  certificate_domain         = var.certificate_domain
 }
 
 module "Cognito" {
   source = "./modules/Cognito"
-  callback_url = "https://${local.my_domain}/index.html"
+  callback_url = "https://${var.my_domain}/index.html"
   domain_prefix = var.cognito_domain_prefix
 }
 
@@ -32,7 +32,7 @@ module "lambda" {
   Cognito_user_pool_id  = module.Cognito.user_pool_id
   Cognito_client_secret = ""
   oidc_scopes           = "email openid"
-  my_domain             = local.my_domain
+  my_domain             = var.my_domain
   aws_apigatewayv2_api  = module.apigateway.api_gateway_arn
   dynamodb_table_name   = module.Dynamodb.instance_table_name
 }
@@ -54,7 +54,7 @@ module "worker_lambda" {
   handler             = "hexapp.inbound.eventbridge_worker.lambda_handler"
   runtime             = "python3.11"
   dynamodb_table_name = module.Dynamodb.instance_table_name
-  my_domain           = local.my_domain
+  my_domain           = var.my_domain
 }
 
 resource "aws_cloudwatch_event_rule" "instance_create_requested" {
