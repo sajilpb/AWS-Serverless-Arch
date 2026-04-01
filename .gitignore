@@ -43,3 +43,13 @@ lib/
 lib/**/*
 
 *.zip
+
+# Terragrunt-generated cache and metadata
+**/.terragrunt-cache/
+**/.terragrunt-source-version
+**/.terragrunt-module-manifest
+**/.terragrunt-source-manifest
+**/.terragrunt-init-required
+
+# Terragrunt-run lock files under live environments
+terraform/live/**/.terraform.lock.hcl

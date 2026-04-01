@@ -1,4 +1,4 @@
-variable "my_domain" {
+variable "certificate_domain" {
   description = "The domain name for ACM certificate"
   type        = string  
 }
