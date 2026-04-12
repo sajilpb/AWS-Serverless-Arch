@@ -15,3 +15,18 @@ variable "acm_certificate_arn" {
   description = "The SSL certificate ARN for CloudFront distribution"
   type        = string
 }
+
+variable "route53_zone_name" {
+  description = "Hosted zone name where CloudFront alias records should be created (for example sajil.click)"
+  type        = string
+  default     = ""
+}
+
+variable "defaultoac" {
+  type = string
+  
+}
+
+variable "tags" {
+  type = map(string)
+}

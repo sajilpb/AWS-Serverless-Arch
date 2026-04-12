@@ -54,3 +54,19 @@ variable "dynamodb_table_name" {
   type        = string
   description = "DynamoDB table name for storing user EC2 instances"
 }
+
+variable "awsiamrolename" {
+  type        = string
+}
+
+variable "loginredirect"{
+  type = string
+}
+
+variable "InstanceManagementTable" {
+  type = string
+}
+
+variable "tags" {
+  type = map( string)
+}

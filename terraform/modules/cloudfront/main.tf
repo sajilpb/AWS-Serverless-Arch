@@ -1,5 +1,5 @@
 resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = "default-oac"
+  name                              = var.defaultoac
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
@@ -98,9 +98,10 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 
-  tags = {
+  tags = merge ( var.tags, {
     Environment = "production"
   }
+  )
 
   viewer_certificate {
     acm_certificate_arn = var.acm_certificate_arn
@@ -108,9 +109,14 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 }
 
+locals {
+  route53_zone_name = var.route53_zone_name != "" ? var.route53_zone_name : var.my_domain
+}
+
 # Create Route53 records for the CloudFront distribution aliases
 data "aws_route53_zone" "my_domain" {
-  name = var.my_domain
+  name         = local.route53_zone_name
+  private_zone = false
 }
 
 
