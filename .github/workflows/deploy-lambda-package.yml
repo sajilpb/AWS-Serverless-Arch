@@ -18,10 +18,12 @@ jobs:
                 python-version: 'pypy3.11' 
             
             - name: Install pylint
-              run: pip install pylint
+              run: |
+                python -m pip install --upgrade pip
+                pip install pylint boto3
 
             - name: Linting Test
-              run: pylint Backend
+              run: python -m pylint Backend
 
             - name: Zip the Lambda function
               run: |

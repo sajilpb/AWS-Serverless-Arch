@@ -7,12 +7,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..application import (
-    CreateInstanceForUser,
     GetRequestStatus,
     RequestInstanceTermination,
     RequestInstanceCreation,
-    TerminateInstancesForUser,
-    TerminateSingleInstance,
 )
 from ..config import Settings
 from ..domain import UserIdentity
@@ -126,8 +123,8 @@ def handle_event(event: dict[str, Any], _context: Any = None) -> dict[str, Any]:
     from ..adapters.aws.ec2_compute import Ec2ComputeAdapter
     from ..adapters.aws.eventbridge_bus import EventBridgeBusAdapter
 
-    compute = Ec2ComputeAdapter(region=settings.aws_region, ami_id_override=settings.ami_id)
-    repo = DynamoDbInstanceRepository(region=settings.aws_region, table_name=settings.ddb_table_name)
+    _ = Ec2ComputeAdapter(region=settings.aws_region, ami_id_override=settings.ami_id)
+    _ = DynamoDbInstanceRepository(region=settings.aws_region, table_name=settings.ddb_table_name)
     request_repo = DynamoDbRequestRepository(region=settings.aws_region, table_name=settings.ddb_table_name)
     clock = UtcClock()
     event_bus = EventBridgeBusAdapter(region=settings.aws_region)
