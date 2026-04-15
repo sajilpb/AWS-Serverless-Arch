@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "example" {
-  name               = "lambda_execution_role"
+  name               = var.awsiamrolename
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
@@ -27,7 +27,7 @@ data "archive_file" "login_redirect" {
 # Lambda function
 resource "aws_lambda_function" "login_redirect" {
   filename      = data.archive_file.login_redirect.output_path
-  function_name = "login-redirect"
+  function_name = var.loginredirect
   role          = aws_iam_role.example.arn
   handler       = "login_redirect.lambda_handler"
   source_code_hash = data.archive_file.login_redirect.output_base64sha256
@@ -47,10 +47,11 @@ resource "aws_lambda_function" "login_redirect" {
     }
   }
 
-  tags = {
+  tags = merge  ( var.tags, {
     Environment = "production"
     Application = "example"
   }
+  )
 }
 
 

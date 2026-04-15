@@ -7,3 +7,17 @@ provider "aws" {
 }
 EOF
 }
+
+remote_state {
+  backend = "local"
+
+  config = {
+    # Keep state in a stable location under terraform/live/state instead of .terragrunt-cache.
+    path = "${get_parent_terragrunt_dir()}/state/${path_relative_to_include()}/terraform.tfstate"
+  }
+
+  generate = {
+    path      = "backend.tf"
+    if_exists = "overwrite_terragrunt"
+  }
+}

@@ -4,7 +4,7 @@ resource "aws_cognito_user_pool_domain" "cognito-domain" {
 }
 
 resource "aws_cognito_user_pool" "pool" {
-    name = "userpool"
+    name = var.userpool
 
     alias_attributes = ["email"]
 
@@ -29,8 +29,7 @@ resource "aws_cognito_user_pool" "pool" {
 }
 
 resource "aws_cognito_user_pool_client" "client" {
-  name = "cognito-client"
-
+  name = var.cognito-client
   user_pool_id = aws_cognito_user_pool.pool.id
   generate_secret = false
   refresh_token_validity = 90

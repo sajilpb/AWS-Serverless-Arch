@@ -77,6 +77,6 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_cloudwatch_log_group" "http_api_access" {
-  name              = "/aws/apigateway/http-api-access"
+  name              = var.loggroupname
   retention_in_days = 7
 }

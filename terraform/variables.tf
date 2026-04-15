@@ -27,3 +27,44 @@ variable "certificate_domain" {
   description = "Domain pattern used to look up ACM certificate (e.g. *.sajil.click)"
   type        = string
 }
+
+variable "route53_zone_name" {
+  description = "Hosted zone name for DNS records (for example sajil.click)"
+  type        = string
+}
+
+variable "instancecreateworker" {
+  type        = string
+}
+
+variable "awsrolename" {
+  type        = string
+}
+
+variable "loginredirect"{
+  type = string
+}
+
+variable "InstanceManagementTable" {
+  type = string
+}
+
+variable "loggroupname" {
+  type = string
+}
+
+variable "cognito-client"{
+  type = string
+}
+
+variable "userpool" {
+  type = string
+}
+
+variable "defaultoac" {
+  type = string
+}
+
+variable "tags" {
+ type = map(string)  
+}

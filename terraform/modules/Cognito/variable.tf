@@ -7,3 +7,11 @@ variable "domain_prefix" {
 	description = "Globally unique domain prefix for Cognito Hosted UI"
 	type        = string
 }
+
+variable "cognito-client" {
+	type = string
+}
+
+variable "userpool" {
+	type = string
+}

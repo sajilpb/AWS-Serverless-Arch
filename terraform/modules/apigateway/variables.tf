@@ -12,3 +12,7 @@ variable "route_key" {
   type    = string
   default = "GET /login"
 }
+
+variable "loggroupname"{
+  type = string
+}
