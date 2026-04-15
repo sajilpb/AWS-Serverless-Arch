@@ -1,5 +1,9 @@
 # AWS Serverless EC2 Control
 
+<p align="center">
+  <img src="https://img.shields.io/badge/AWS--ServerlessArch-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" alt="AWS-ServerlessArch" />
+</p>
+
 Serverless reference implementation using:
 - Terraform for infrastructure
 - Lambda + API Gateway HTTP API for backend
