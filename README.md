@@ -4,6 +4,8 @@
   <img src="https://img.shields.io/badge/AWS--ServerlessArch-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white" alt="AWS-ServerlessArch" />
 </p>
 
+<p align="center"><img src="AWS-ServerlessArch.svg" alt="AWS-ServerlessArch" width="420" /></p>
+
 Serverless reference implementation using:
 - Terraform for infrastructure
 - Lambda + API Gateway HTTP API for backend
