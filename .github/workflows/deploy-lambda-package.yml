@@ -1,0 +1,31 @@
+name: Deploy the Lambda package
+
+on:
+ push: 
+    branches:
+      - main
+
+jobs:
+    build:
+        runs-on: Ubuntu:latest
+        steps:
+            - name: Checkout the repo
+              uses: actions/checkout@v4
+            
+            - name: setup Python
+              uses: actions/setup-python@v6
+              with:
+                python-version: 'pypy3.11' 
+            
+            - name: Install pylint
+              run: pip install pylint
+
+            - name: Linting Test
+              run: pylint Backend
+
+            - name: Zip the Lambda function
+              run: |
+                cd Backend
+                zip -r ../lambda.zip .
+
+            
