@@ -24,4 +24,8 @@ inputs = {
   cognito-client = "dev-cognito-client"
   defaultoac = "dev-default-oac"
   tags = { Enviorment = "dev" }
+  s3bucketnames3lambda = "lambdas3bucket343434"
+  source_file_path = "${get_terragrunt_dir()}/../../../../Backend"
+  output_zip_path  = "./build/login_redirect.zip"
+  sourcecodehash = "v1.0.0"  # Or any value that changes with code updates
 }

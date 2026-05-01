@@ -56,7 +56,7 @@ variable "dynamodb_table_name" {
 }
 
 variable "awsiamrolename" {
-  type        = string
+  type = string
 }
 
 variable "loginredirect"{
@@ -69,4 +69,17 @@ variable "InstanceManagementTable" {
 
 variable "tags" {
   type = map( string)
+}
+
+variable "s3bucketname" {
+  type = string
+}
+
+variable "s3_key" {
+  type = string
+}
+
+variable "sourcecodehash" {
+  type = string
+  default     = "initial"
 }

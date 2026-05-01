@@ -17,20 +17,22 @@ resource "aws_iam_role" "example" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# Package the Lambda function code
-data "archive_file" "login_redirect" {
-  type        = "zip"
-  source_dir  = var.source_file_path
-  output_path = var.output_zip_path
-}
+# # Package the Lambda function code
+# data "archive_file" "login_redirect" {
+#   type        = "zip"
+#   source_dir  = var.source_file_path
+#   output_path = var.output_zip_path
+# }
 
 # Lambda function
 resource "aws_lambda_function" "login_redirect" {
-  filename      = data.archive_file.login_redirect.output_path
+  # filename      = data.archive_file.login_redirect.output_path
+  s3_bucket     = var.s3bucketname
+  s3_key        = var.s3_key
   function_name = var.loginredirect
   role          = aws_iam_role.example.arn
   handler       = "login_redirect.lambda_handler"
-  source_code_hash = data.archive_file.login_redirect.output_base64sha256
+  source_code_hash = var.sourcecodehash
   timeout       = 300
 
   runtime = var.runtime

@@ -6,12 +6,24 @@ module "cloudfront" {
   acm_certificate_arn = module.ACM.acm_certificate_arn
   aws_s3_bucket = var.s3bucketname
   defaultoac = var.defaultoac
+  tags = var.tags
   depends_on = [ module.s3 ]
+  
 }
 
 module "s3" {
+  source           = "./modules/S3"
+  s3bucketname     = var.s3bucketname
+  tags             = var.tags
+  
+}
+
+module "s3_lambda" {
   source          = "./modules/S3"
-  s3bucketname    = var.s3bucketname
+  s3bucketname    = var.s3bucketnames3lambda
+  source_file_path = var.source_file_path
+  output_zip_path  = var.output_zip_path
+  s3_key          = "login_redirect.py"
   tags = var.tags
 }
 
@@ -35,6 +47,8 @@ module "lambda" {
   Cognito_domain_prefix = module.Cognito.domain_prefix
   Cognito_client_id     = module.Cognito.client_id
   Cognito_user_pool_id  = module.Cognito.user_pool_id
+  s3bucketname          = module.s3_lambda.bucket_name
+  s3_key                = module.s3_lambda.s3_key
   Cognito_client_secret = ""
   oidc_scopes           = "email openid"
   my_domain             = var.my_domain
@@ -43,6 +57,7 @@ module "lambda" {
   awsiamrolename        = var.awsrolename
   loginredirect         = var.loginredirect
   InstanceManagementTable = var.InstanceManagementTable
+  sourcecodehash        = module.s3_lambda.etag
   tags = var.tags
 }
 

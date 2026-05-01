@@ -68,3 +68,11 @@ variable "defaultoac" {
 variable "tags" {
  type = map(string)  
 }
+
+variable "s3bucketnames3lambda" {
+  type = string
+}
+
+variable "sourcecodehash" {
+  type = string
+}

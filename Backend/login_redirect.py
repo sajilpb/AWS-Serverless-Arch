@@ -1,4 +1,4 @@
-"""Lambda entrypoint.
+"""Lambda entrypoint.......
 
 This file stays as the Terraform handler target (login_redirect.lambda_handler),
 but delegates all request handling to the hexagonal architecture layers under
