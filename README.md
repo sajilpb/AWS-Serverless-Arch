@@ -114,3 +114,37 @@ aws cloudfront create-invalidation \
 - EC2 instances incur cost while running; ensure you delete them when finished.
 - Terraform state files can contain identifiers and configuration; prefer a remote backend (S3 + DynamoDB) for production.
 - IAM policies are intentionally broad for learning; tighten them before using in a real environment.
+
+## 6. Release Strategy & CI/CD
+
+### Branching Strategy
+
+This project uses a **three-branch model** for controlled deployments:
+
+#### `dev` Branch
+- **Purpose:** Development and testing environment
+- **Trigger:** Automatic CI/CD on push to `dev`
+- **Deployment:** 
+  - Backend changes (`Backend/**`) → Upload to S3 Dev bucket
+  - Terraform changes (`terraform/**`) → Apply to Dev environment
+- **Workflow Files:**
+  - `.github/workflows/Lambda-CI-Dev.yml` (code deployment)
+  - `.github/workflows/Terraform-Dev.yml` (infrastructure deployment)
+
+#### `release/*` Branch
+- **Purpose:** Release staging and final validation
+- **Creation:** Create from `dev` when ready to release (e.g., `release/1.0.1`)
+- **Deployment:** Optional extra validation/testing workflows
+- **Next Step:** Open Pull Request into `main`
+
+#### `main` Branch
+- **Purpose:** Production environment
+- **Trigger:** Automatic CI/CD on merge (via PR) or push to `main`
+- **Deployment:** 
+  - Backend changes → Upload to S3 Prod bucket
+  - Terraform changes → Apply to Prod environment
+- **Workflow Files:**
+  - `.github/workflows/Lambda-CI-Prod.yml` (code deployment)
+  - `.github/workflows/Terraform-Prod.yml` (infrastructure deployment)
+
+### Release Workflow
