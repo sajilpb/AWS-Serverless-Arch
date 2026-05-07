@@ -84,6 +84,15 @@ module "worker_lambda" {
   my_domain           = var.my_domain
 }
 
+module "Codebuild" {
+  source = "./modules/Codepipelines"
+  Codebuild-project-name = var.codebuildprojectname
+  Codebuild-project-name-description = "var.codebuildprojectdescription"
+  Source-repo = var.sourcerepo
+  source-buildspec-file = var.buildspecfile
+  source-branch = var.sourcebranch
+}
+
 resource "aws_cloudwatch_event_rule" "instance_create_requested" {
   name        = "instance-create-requested"
   description = "Routes InstanceCreateRequested events to the provisioning worker"

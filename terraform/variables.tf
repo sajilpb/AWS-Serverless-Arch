@@ -76,3 +76,27 @@ variable "s3bucketnames3lambda" {
 variable "sourcecodehash" {
   type = string
 }
+
+variable "codebuildsourcerepo" {
+  type = string
+}
+
+variable "codebuildprojectname" {
+  type = string
+}
+
+variable "codebuildprojectdescription" {
+  type = string
+}
+
+variable "sourcerepo" {
+  type = string
+}
+
+variable "buildspecfile" {
+  type = string
+}
+
+variable "sourcebranch" {
+  type = string
+}

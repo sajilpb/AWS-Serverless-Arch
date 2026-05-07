@@ -28,4 +28,11 @@ inputs = {
   source_file_path = "${get_terragrunt_dir()}/../../../../Backend"
   output_zip_path  = "./build/login_redirect.zip"
   sourcecodehash = "v1.0.0"  # Or any value that changes with code updates
+  codebuildsourcerepo = "./modules/CodeDeploy"
+  codebuildprojectname = "PackageanduploadLambda"
+  codebuildprojectdescription = "PackageanduploadLambda"
+  sourcerepo = "sajilpb/AWS-Serverless-Arch"
+  buildspecfile = "${get_terragrunt_dir()}/../../../../buildspec.yml"
+  sourcebranch = "main"
+
 }
