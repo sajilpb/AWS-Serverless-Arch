@@ -32,7 +32,7 @@ inputs = {
   codebuildprojectname = "PackageanduploadLambda"
   codebuildprojectdescription = "PackageanduploadLambda"
   sourcerepo = "sajilpb/AWS-Serverless-Arch"
-  buildspecfile = "${get_terragrunt_dir()}/../../../../buildspec.yml"
+  buildspecfile = "buildspec.yml"
   sourcebranch = "main"
 
 }
