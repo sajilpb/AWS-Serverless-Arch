@@ -44,6 +44,7 @@ resource "aws_iam_role" "codebuild" {
   assume_role_policy = data.aws_iam_policy_document.assume_role_codebuild.json
 }
 
+
 ## Create code build.
 
 resource "aws_codebuild_project" "project" {
@@ -90,10 +91,15 @@ data "aws_codestarconnections_connection" "github" {
   name = "Github-sajil"
 }
 
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
+
 
 resource "aws_codepipeline" "codepipeline" {
   name     = "deploylambda"
   role_arn = aws_iam_role.codepipeline_role.arn
+  pipeline_type = "V2"
 
   artifact_store {
     location = aws_s3_bucket.codepipeline_bucket.bucket
@@ -137,28 +143,25 @@ resource "aws_codepipeline" "codepipeline" {
     }
   }
 
-  # stage {
-  #   name = "Deploy"
+  stage {
+    name = "Deploy"
 
-  #   action {
-  #     name            = "Deploy"
-  #     category        = "Deploy"
-  #     owner           = "AWS"
-  #     provider        = "CloudFormation"
-  #     input_artifacts = ["build_output"]
-  #     version         = "1"
+    action {
+      name            = "Deploy"
+      category        = "Deploy"
+      owner           = "AWS"
+      provider        = "Lambda"
+      input_artifacts = ["build_output"]
+      version         = "1"
 
-  #     configuration = {
-  #       ActionMode     = "REPLACE_ON_FAILURE"
-  #       Capabilities   = "CAPABILITY_AUTO_EXPAND,CAPABILITY_IAM"
-  #       OutputFileName = "CreateStackOutput.json"
-  #       StackName      = "MyStack"
-  #       TemplatePath   = "build_output::sam-templated.yaml"
-  #     }
-  #   }
-  # }
+      configuration = {
+        FunctionName        = var.lambdafunctionname
+        FunctionAlias       = "live"
+        DeployStrategy      = "Linear10PercentEvery1Minute"
+      }
+    }
+  }
 }
-
 
 resource "aws_s3_bucket" "codepipeline_bucket" {
   bucket = "lambdapipelineartifacts4343434"
@@ -201,12 +204,31 @@ data "aws_iam_policy_document" "codepipeline_policy" {
       "s3:GetBucketVersioning",
       "s3:PutObjectAcl",
       "s3:PutObject",
+      "codedeploy:CreateDeployment",
+      "codedeploy:GetApplication",
+      "codedeploy:GetDeployment",
+      "codedeploy:GetDeploymentGroup",
+      "codedeploy:RegisterApplicationRevision",
+      "codedeploy:GetDeploymentConfig",
+      "codedeploy:ListDeploymentConfigs",
     ]
 
     resources = [
       aws_s3_bucket.codepipeline_bucket.arn,
       "${aws_s3_bucket.codepipeline_bucket.arn}/*"
     ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+
+    resources = ["*"]
   }
 
   statement {
@@ -225,6 +247,39 @@ data "aws_iam_policy_document" "codepipeline_policy" {
 
     resources = ["*"]
   }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:UpdateFunctionCode",
+      "lambda:PublishVersion",
+      "lambda:GetAlias",
+      "lambda:UpdateAlias",
+      "lambda:CreateAlias",
+      "lambda:ListVersionsByFunction",
+      "lambda:ListAliases",
+    ]
+
+    resources = [
+      "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.lambdafunctionname}",
+      "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.lambdafunctionname}:*",
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [ 
+      "s3:*"
+     ]
+    
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.codepipeline_bucket.bucket}"   
+      ]
+  }
 }
 
 resource "aws_iam_role_policy" "codepipeline_policy" {
@@ -232,5 +287,3 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
   role   = aws_iam_role.codepipeline_role.id
   policy = data.aws_iam_policy_document.codepipeline_policy.json
 }
-
-

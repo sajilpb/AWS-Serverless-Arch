@@ -8,5 +8,11 @@ phases:
     commands:
       # Package the Lambda function code and dependencies
       - echo "Packaging Lambda function..."
-      - cd Backend && zip -r ../package.zip . -x "*.pytest-cache*" "__pycache__/*" "*/__pycache__/*"
-      
+
+artifacts:
+  base-directory: Backend
+  files:
+    - "**/*"
+  exclude-paths:
+    - "**/.pytest-cache/**/*"
+    - "**/__pycache__/**/*"

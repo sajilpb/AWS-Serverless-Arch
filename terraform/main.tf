@@ -91,6 +91,7 @@ module "Codebuild" {
   Source-repo = var.sourcerepo
   source-buildspec-file = var.buildspecfile
   source-branch = var.sourcebranch
+  lambdafunctionname = module.lambda.function_name
 }
 
 resource "aws_cloudwatch_event_rule" "instance_create_requested" {

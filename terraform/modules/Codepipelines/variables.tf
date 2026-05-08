@@ -17,3 +17,7 @@ variable "source-buildspec-file" {
 variable "source-branch" {
     type = string
 }
+
+variable "lambdafunctionname" {
+  type = string
+}
