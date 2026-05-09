@@ -17,12 +17,12 @@ resource "aws_iam_role" "example" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# # Package the Lambda function code
-# data "archive_file" "login_redirect" {
-#   type        = "zip"
-#   source_dir  = var.source_file_path
-#   output_path = var.output_zip_path
-# }
+resource "aws_lambda_alias" "production" {
+  name             = "production"
+  description      = "Production environment alias"
+  function_name    = aws_lambda_function.login_redirect.function_name
+  function_version = aws_lambda_function.login_redirect.version
+}
 
 # Lambda function
 resource "aws_lambda_function" "login_redirect" {
@@ -34,6 +34,7 @@ resource "aws_lambda_function" "login_redirect" {
   handler       = "login_redirect.lambda_handler"
   source_code_hash = var.sourcecodehash
   timeout       = 300
+  publish       = true
 
   runtime = var.runtime
 

@@ -156,7 +156,7 @@ resource "aws_codepipeline" "codepipeline" {
 
       configuration = {
         FunctionName        = var.lambdafunctionname
-        FunctionAlias       = "live"
+        FunctionAlias       = "production"
         DeployStrategy      = "Linear10PercentEvery1Minute"
       }
     }
@@ -165,6 +165,7 @@ resource "aws_codepipeline" "codepipeline" {
 
 resource "aws_s3_bucket" "codepipeline_bucket" {
   bucket = "lambdapipelineartifacts4343434"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pab" {
