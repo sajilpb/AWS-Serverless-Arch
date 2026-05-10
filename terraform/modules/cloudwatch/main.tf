@@ -44,7 +44,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_error_rate" {
 
   metric_query {
     id = "e1"
-    expression = "m1 + m2"
+    # expression = "m1 + m2"
+    expression = "FILL(m1, 0) + FILL(m2, 0)"
     label = "Lambda errors plus throttle"
     return_data = true
   }

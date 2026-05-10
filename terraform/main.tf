@@ -63,7 +63,8 @@ module "lambda" {
 
 module "apigateway" {
   source       = "./modules/apigateway"
-  aws_lambda_login_redirect = module.lambda.function_arn
+  # aws_lambda_login_redirect = module.lambda.function_arn
+  aws_lambda_login_redirect = module.lambda.production_alias_invoke_arn
   loggroupname = var.loggroupname
 }
 

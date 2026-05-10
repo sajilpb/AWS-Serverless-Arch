@@ -63,6 +63,7 @@ resource "aws_lambda_permission" "apigw_login" {
   statement_id  = "AllowInvokeFromHttpApiLogin"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.login_redirect.function_name
+  qualifier     = aws_lambda_alias.production.name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${var.aws_apigatewayv2_api}/*/GET/login"
 }
