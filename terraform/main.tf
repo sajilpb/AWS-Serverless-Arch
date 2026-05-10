@@ -92,6 +92,12 @@ module "Codebuild" {
   source-buildspec-file = var.buildspecfile
   source-branch = var.sourcebranch
   lambdafunctionname = module.lambda.function_name
+  lambda_deployment_alarm_names = module.cloudwatch.lambda_deployment_alarm_names
+}
+
+module "cloudwatch" {
+  source = "./modules/cloudwatch"
+  lambda_function_name = module.lambda.function_name
 }
 
 resource "aws_cloudwatch_event_rule" "instance_create_requested" {

@@ -21,3 +21,7 @@ variable "source-branch" {
 variable "lambdafunctionname" {
   type = string
 }
+
+variable "lambda_deployment_alarm_names" {
+  type = list(string)
+}

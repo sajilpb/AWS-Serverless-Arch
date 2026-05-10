@@ -35,6 +35,7 @@ resource "aws_lambda_function" "login_redirect" {
   source_code_hash = var.sourcecodehash
   timeout       = 300
   publish       = true
+  reserved_concurrent_executions = 0
 
   runtime = var.runtime
 

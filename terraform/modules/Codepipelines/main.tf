@@ -158,6 +158,7 @@ resource "aws_codepipeline" "codepipeline" {
         FunctionName        = var.lambdafunctionname
         FunctionAlias       = "production"
         DeployStrategy      = "Linear10PercentEvery1Minute"
+        Alarms              = join(",",var.lambda_deployment_alarm_names)
       }
     }
   }
@@ -212,7 +213,7 @@ data "aws_iam_policy_document" "codepipeline_policy" {
       "codedeploy:RegisterApplicationRevision",
       "codedeploy:GetDeploymentConfig",
       "codedeploy:ListDeploymentConfigs",
-    ]
+      ]
 
     resources = [
       aws_s3_bucket.codepipeline_bucket.arn,
@@ -227,6 +228,16 @@ data "aws_iam_policy_document" "codepipeline_policy" {
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "cloudwatch:DescribeAlarms",
     ]
 
     resources = ["*"]
