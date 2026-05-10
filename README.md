@@ -117,6 +117,64 @@ aws cloudfront create-invalidation \
 
 ## 6. Release Strategy & CI/CD
 
+### Terragrunt Dev Workflow
+
+The repository includes a GitHub Actions workflow for applying the dev
+environment with Terragrunt and temporary S3 remote state:
+
+```text
+.github/workflows/terragrunt-dev.yml
+```
+
+The workflow can be run manually from GitHub Actions:
+
+```text
+Actions -> Terragrunt Dev Apply -> Run workflow
+```
+
+Choose:
+
+- `plan` to review changes.
+- `apply` to bootstrap S3 state and apply the dev environment.
+
+On pushes to `main`, the workflow also runs automatically when Terraform,
+backend code, the buildspec, the Terragrunt wrapper script, or the workflow file
+changes.
+
+Required GitHub Actions secret:
+
+```text
+AWS_GITHUB_ACTIONS_ROLE_ARN
+```
+
+This must be the IAM role ARN that GitHub Actions can assume through OIDC.
+
+Optional GitHub Actions variable:
+
+```text
+TG_STATE_BUCKET
+```
+
+If omitted, the workflow uses:
+
+```text
+sajilpb-aws-serverless-arch-tfstate-test
+```
+
+The workflow uses S3 state only for the Actions run by setting:
+
+```bash
+TG_REMOTE_STATE_BACKEND=s3
+```
+
+The default local Terragrunt state remains available for local testing. The S3
+backend is bootstrapped automatically before `plan` or `apply`:
+
+```bash
+terragrunt backend bootstrap --non-interactive
+terragrunt init -migrate-state -force-copy
+```
+
 ### Branching Strategy
 
 This project uses a **three-branch model** for controlled deployments:
