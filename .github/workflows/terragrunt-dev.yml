@@ -1,0 +1,72 @@
+name: Terragrunt Dev Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Run a plan or apply
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - "plan"
+          - "apply"
+  push:
+    branches:
+      - main
+    paths:
+      - "terraform/**"
+      - "Backend/**"
+      - "buildspec.yml"
+      - "scripts/terragrunt-s3-apply.sh"
+      - ".github/workflows/terragrunt-dev.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: terragrunt-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  TG_APP_DIR: terraform/live/dev/app
+  TG_STATE_BUCKET: ${{ vars.TG_STATE_BUCKET || 'sajilpb-aws-serverless-arch-tfstate-test' }}
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+
+      - name: Install Terragrunt
+        run: |
+          curl -L https://github.com/gruntwork-io/terragrunt/releases/download/v1.0.0/terragrunt_linux_amd64 -o /usr/local/bin/terragrunt
+          chmod +x /usr/local/bin/terragrunt
+          terragrunt --version
+
+      - name: Terragrunt plan with S3 state
+        if: github.event_name == 'workflow_dispatch' && inputs.command == 'plan'
+        run: |
+          export TG_REMOTE_STATE_BACKEND=s3
+          terragrunt backend bootstrap --non-interactive --working-dir "${TG_APP_DIR}"
+          terragrunt init -migrate-state -force-copy --working-dir "${TG_APP_DIR}"
+          terragrunt plan --working-dir "${TG_APP_DIR}"
+
+      - name: Terragrunt apply with S3 state
+        if: github.event_name == 'push' || inputs.command == 'apply'
+        run: |
+          ./scripts/terragrunt-s3-apply.sh -auto-approve

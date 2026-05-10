@@ -1,5 +1,5 @@
-include {
-  path = find_in_parent_folders()
+include "root" {
+  path = get_env("TG_REMOTE_STATE_BACKEND", "local") == "s3" ? find_in_parent_folders("s3-state.hcl") : find_in_parent_folders()
 }
 
 terraform {

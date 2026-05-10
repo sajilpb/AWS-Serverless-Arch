@@ -8,6 +8,7 @@ nav:
   - Architecture:
       - Overview: architecture/overview.md
       - Components: architecture/components.md
+      - STRIDE Threat Model: threat-model-stride.md
   - Infrastructure:
       - Terraform Layout: infrastructure/terraform-layout.md
       - Modules: infrastructure/modules.md
